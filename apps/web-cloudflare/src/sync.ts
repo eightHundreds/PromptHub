@@ -45,6 +45,7 @@ export function normalizeSnapshot(input: unknown): SyncSnapshot {
     skills: Array.isArray(value.skills) ? value.skills : [],
     skillVersions: Array.isArray(value.skillVersions) ? value.skillVersions : [],
     skillFiles: value.skillFiles && typeof value.skillFiles === "object" ? value.skillFiles : undefined,
+    storeSources: value.storeSources && typeof value.storeSources === "object" ? value.storeSources : undefined,
     settings: value.settings,
     settingsUpdatedAt: typeof value.settingsUpdatedAt === "string" ? value.settingsUpdatedAt : undefined,
   };

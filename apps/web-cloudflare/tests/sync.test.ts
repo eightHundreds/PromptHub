@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { emptySnapshot, normalizeSnapshot } from "../src/sync";
+import { emptySnapshot, normalizeSnapshot, saveSnapshot } from "../src/sync";
 
 describe("sync snapshot helpers", () => {
   it("creates an empty snapshot with cloudflare backup version", () => {
@@ -39,5 +39,45 @@ describe("sync snapshot helpers", () => {
 
     expect(normalized.versions).toEqual([version]);
     expect(normalized.promptVersions).toEqual([version]);
+  });
+
+  it("preserves Plugin Store source configuration in the D1 payload", async () => {
+    const plugins = {
+      customStoreSources: [
+        {
+          id: "plugin-source-1",
+          name: "Plugin Store",
+          type: "marketplace-json" as const,
+          url: "https://example.com/plugins.json",
+          enabled: true,
+        },
+      ],
+      selectedSourceId: "plugin-source-1",
+    };
+
+    const normalized = normalizeSnapshot({
+      storeSources: { plugins },
+    });
+    let boundValues: unknown[] = [];
+    const db = {
+      prepare: () => ({
+        bind: (...values: unknown[]) => {
+          boundValues = values;
+          return { run: async () => ({}) };
+        },
+      }),
+    } as unknown as D1Database;
+
+    await saveSnapshot(db, "user-1", normalized);
+    const storedSnapshot = JSON.parse(String(boundValues[1]));
+
+    expect(normalized.storeSources?.plugins).toEqual(plugins);
+    expect(storedSnapshot.storeSources.plugins).toEqual(plugins);
+  });
+
+  it("omits malformed store source configuration", () => {
+    const normalized = normalizeSnapshot({ storeSources: "invalid" });
+
+    expect(normalized.storeSources).toBeUndefined();
   });
 });
