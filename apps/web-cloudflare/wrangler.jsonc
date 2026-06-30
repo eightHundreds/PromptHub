@@ -15,7 +15,7 @@
     {
       "binding": "DB",
       "database_name": "prompthub_d1",
-      "database_id": "replace-with-your-d1-database-id",
+      "database_id": "8cfc8acd-d1a2-405b-96f9-d78668bee12c",
       "migrations_dir": "migrations"
     }
   ],
@@ -28,7 +28,7 @@
   ],
   "vars": {
     "ALLOW_REGISTRATION": "false",
-    "AUTH_CAPTCHA_ENABLED": "true",
+    "AUTH_CAPTCHA_ENABLED": "false",
     "ACCESS_TOKEN_TTL_SECONDS": "86400"
   }
 }
