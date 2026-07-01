@@ -11,6 +11,9 @@
 - Desktop sync settings must keep unavailable capabilities visible but clearly disabled when the backing feature is not implemented.
 - Desktop may keep multiple backup targets enabled for manual backup/restore, but automatic sync must execute against only one active sync source at a time.
 - Desktop cloud-backup navigation must use provider-oriented labels and expose whether each provider is enabled without requiring the user to open every panel.
+- Desktop Skill restore must preserve snapshot Skill IDs before restoring versions
+  and managed files; it must not reinterpret restored records as new GitHub or
+  store installations.
 
 ## Scenarios
 
@@ -29,6 +32,12 @@
   - Given a workspace contains media references, rules, skills, and `settingsUpdatedAt`
   - When the user exports a backup, uploads to self-hosted sync, or imports through web
   - Then those flows preserve the same logical snapshot fields and timestamp semantics
+
+- Scenario: Desktop restores Skill files from self-hosted sync
+  - Given a remote snapshot contains Skill rows, versions, and files keyed by Skill ID
+  - When desktop restores the snapshot
+  - Then it inserts each Skill with the snapshot ID before restoring versions and files
+  - And it does not invoke the normal Skill creation or remote installation path
 
 - Scenario: User syncs agent asset libraries
   - Given a desktop workspace contains My Skills, My MCP servers, My Plugins, and custom Skill/MCP/Plugin store sources

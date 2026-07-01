@@ -18,6 +18,8 @@ This creates a real risk that data exported from one entry point cannot be faith
 - Preserve compatibility with existing PromptHub backup/export envelopes and legacy prompt version fields.
 - Make desktop data settings clearly mark unavailable sync capabilities instead of implying that unimplemented S3 or save-triggered sync actions already work.
 - Add regression coverage for JSON export/import, ZIP export/import, and self-hosted/web sync payload consistency.
+- Restore desktop Skill rows through the existing direct-insert database path so
+  remote pulls preserve Skill IDs and never fall through to normal install logic.
 
 ## Risks
 
@@ -34,5 +36,6 @@ This creates a real risk that data exported from one entry point cannot be faith
 - Desktop manual backup and restore.
 - Desktop selective ZIP export and later restore/import.
 - Desktop self-hosted push/pull.
+- Desktop Skill database and managed-file restore.
 - Web `/api/import`, `/api/export`, and `/api/sync/*` data interchange.
 - Desktop data settings for WebDAV and S3 availability disclosure.

@@ -3,6 +3,7 @@ import { IPC_CHANNELS } from "@prompthub/shared/constants/ipc-channels";
 import type {
   CreateSkillParams,
   MCPServerConfig,
+  Skill,
   SkillPlatformInstallResult,
   SkillPlatformInstallStatusMap,
   SkillSafetyReport,
@@ -322,6 +323,8 @@ export const skillApi = {
   versionDelete: (skillId: string, versionId: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_VERSION_DELETE, skillId, versionId),
   deleteAll: () => ipcRenderer.invoke(IPC_CHANNELS.SKILL_DELETE_ALL, true),
+  insertDirect: (skill: Skill) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SKILL_INSERT_DIRECT, skill),
   insertVersionDirect: (version: SkillVersion) =>
     ipcRenderer.invoke(IPC_CHANNELS.SKILL_INSERT_VERSION_DIRECT, version),
 };

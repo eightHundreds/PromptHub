@@ -972,6 +972,18 @@ export async function importDatabase(backup: DatabaseBackup): Promise<void> {
       }
 
       try {
+        if (window.api?.skill?.insertDirect) {
+          const restoredSkill = {
+            ...skill,
+            is_favorite: skill.is_favorite ?? false,
+            protocol_type: skill.protocol_type ?? "skill",
+          };
+          await window.api.skill.insertDirect(restoredSkill);
+          restoredSkillIdMap.set(skill.id, skill.id);
+          restoredSkillsByName.set(skill.name, restoredSkill);
+          continue;
+        }
+
         const {
           id: _id,
           created_at: _createdAt,

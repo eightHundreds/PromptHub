@@ -157,6 +157,7 @@ export const IPC_CHANNELS = {
   SKILL_VERSION_DELETE: "skill:version:delete",
   // Skill Backup Restore
   SKILL_DELETE_ALL: "skill:deleteAll",
+  SKILL_INSERT_DIRECT: "skill:insertDirect",
   SKILL_INSERT_VERSION_DIRECT: "skill:version:insertDirect",
 
   // MCP

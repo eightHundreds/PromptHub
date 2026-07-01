@@ -1,6 +1,10 @@
 import { ipcMain } from "electron";
 import { IPC_CHANNELS } from "@prompthub/shared/constants";
-import type { SkillFileSnapshot, SkillVersion } from "@prompthub/shared/types";
+import type {
+  Skill,
+  SkillFileSnapshot,
+  SkillVersion,
+} from "@prompthub/shared/types";
 import type { SkillIPCContext } from "./shared";
 import { readCurrentFilesSnapshot, replaceRepoFiles } from "./shared";
 import { SkillInstaller } from "../../services/skill-installer";
@@ -127,6 +131,22 @@ export function registerSkillVersionHandlers({ db }: SkillIPCContext): void {
         console.warn("Failed to delete all local repos:", error);
       }
       return db.deleteAll();
+    },
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.SKILL_INSERT_DIRECT,
+    async (_, skill: Skill) => {
+      if (!skill || typeof skill !== "object") {
+        throw new Error("skill:insertDirect requires a non-null skill object");
+      }
+      if (typeof skill.id !== "string" || skill.id.trim().length === 0) {
+        throw new Error("skill:insertDirect requires a non-empty id");
+      }
+      if (typeof skill.name !== "string" || skill.name.trim().length === 0) {
+        throw new Error("skill:insertDirect requires a non-empty name");
+      }
+      return db.insertSkillDirect(skill);
     },
   );
 

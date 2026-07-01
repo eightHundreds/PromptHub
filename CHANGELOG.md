@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [0.5.9-beta.2-selfhost.2] - 2026-07-01
+
+### 问题修复 / Fixes
+
+- 🧩 **桌面 Skill 同步恢复修复**：从自部署远端拉取时直接按快照 ID 恢复 Skill 数据库记录，再恢复版本和目录文件，避免普通创建流程改变 ID 后出现 `Skill not found`
+  - **Desktop Skill Sync Restore Fix**: Self-hosted pulls now restore Skill database rows with their snapshot IDs before versions and directory files, preventing `Skill not found` failures caused by normal creation changing IDs
+
 ## [0.5.9-beta.2-selfhost.1] - 2026-07-01
 
 ### 新功能 / Features

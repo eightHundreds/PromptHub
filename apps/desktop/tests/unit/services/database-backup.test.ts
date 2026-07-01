@@ -858,6 +858,7 @@ describe("database-backup restore", () => {
             },
           ]),
           deleteAll: vi.fn().mockResolvedValue(undefined),
+          insertDirect: vi.fn().mockResolvedValue(undefined),
           create: vi.fn().mockResolvedValue({
             id: "restored-skill-1",
             name: "writer",
@@ -924,33 +925,26 @@ describe("database-backup restore", () => {
       state: { language: "zh", theme: "dark" },
     });
     expect(window.api.skill.deleteAll).toHaveBeenCalledTimes(1);
-    expect(window.api.skill.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: "writer",
-        description: "Writer skill",
-        content: "# Writer",
-        instructions: "# Writer",
-      }),
-      { skipInitialVersion: true },
-    );
+    expect(window.api.skill.insertDirect).toHaveBeenCalledWith(skill);
+    expect(window.api.skill.create).not.toHaveBeenCalled();
     expect(window.api.skill.insertVersionDirect).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "skill-version-1",
-        skillId: "restored-skill-1",
+        skillId: "skill-1",
         version: 1,
       }),
     );
-    expect(window.api.skill.update).toHaveBeenCalledWith("restored-skill-1", {
+    expect(window.api.skill.update).toHaveBeenCalledWith("skill-1", {
       currentVersion: 2,
     });
     expect(window.api.skill.writeLocalFile).toHaveBeenCalledWith(
-      "restored-skill-1",
+      "skill-1",
       "SKILL.md",
       "# Writer",
       { skipVersionSnapshot: true },
     );
     expect(window.api.skill.writeLocalFile).toHaveBeenCalledWith(
-      "restored-skill-1",
+      "skill-1",
       "notes/example.md",
       "Example",
       { skipVersionSnapshot: true },

@@ -11,6 +11,10 @@ The fix is to converge on one logical snapshot contract instead of keeping separ
 - Keep accepting historical PromptHub envelopes (`prompthub-backup`, `prompthub-export`) and legacy `versions` payloads for compatibility.
 - Make desktop `import-with-prompthub.json` contain a full re-importable snapshot, even when the ZIP also includes human-readable file trees.
 - Treat `skillFiles` as part of the recoverable snapshot contract, with the web skill workspace acting as the durable backing store instead of introducing a separate database table.
+- Restore desktop Skill rows with `SkillDB.insertSkillDirect()` through a narrow
+  backup-only IPC method. This preserves snapshot IDs, keeps `skillVersions` and
+  `skillFiles` keyed to the same ID, and avoids invoking normal GitHub/store
+  installation branches during restore.
 - Treat My MCP and My Plugins as first-class current-format sync payloads: MCP uses its `McpLibraryFile`; Plugins use `PluginLibraryFile` plus snapshots of PromptHub-managed plugin package files.
 - Treat `data/mcp` and `data/plugins` as complete managed Agent asset directories. Backup/sync must include file snapshots for those directories in addition to structured library fields, while excluding dependency/VCS/cache directories such as `.git`, `node_modules`, `.venv`, `__pycache__`, and `.cache`.
 - Restore managed Agent asset directory snapshots before rewriting structured MCP/Plugin libraries, so files are complete while Plugin `library.json` still gets remapped to current-machine paths.

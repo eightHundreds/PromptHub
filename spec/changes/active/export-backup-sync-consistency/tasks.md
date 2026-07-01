@@ -4,6 +4,8 @@
 - [x] Make desktop `import-with-prompthub.json` embed a full re-importable snapshot.
 - [x] Preserve compatibility for PromptHub backup/export envelopes and legacy `versions` payloads.
 - [x] Preserve `skillFiles` across web import/export, sync pull/push, and desktop self-hosted sync flows.
+- [x] Add regression coverage for desktop Skill restore preserving snapshot IDs.
+- [x] Route desktop Skill restore through the existing direct-insert database primitive.
 - [x] Make web `/api/sync/data` and `/api/sync/pull` reuse the canonical `parseSyncSnapshot()` path instead of maintaining a second schema/normalizer.
 - [x] Align missing imported settings fallback across web `/api/import` and `/api/sync/*` with the shared `DEFAULT_SETTINGS` contract.
 - [x] Preserve supported shared settings preferences across web export/import and sync snapshot parsing instead of stripping route-supported fields during import.

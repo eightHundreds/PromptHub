@@ -2,6 +2,11 @@
 
 ## Shipped Changes
 
+- Desktop Skill restore now exposes the existing `SkillDB.insertSkillDirect()`
+  primitive through a validated backup-only IPC channel. Backup and self-hosted
+  pull restore preserve snapshot Skill IDs before inserting versions and writing
+  managed files, avoiding normal GitHub/store installation behavior and the
+  resulting `Skill not found` cascade.
 - Web import/export now reuses `parseSyncSnapshot()` as the normalization boundary for JSON and ZIP imports, preserving PromptHub envelope compatibility, legacy `versions`, numeric timestamps, media payloads, and desktop `settings.state` snapshots.
 - Web `/api/import` now keeps validation failures on the `VALIDATION_ERROR`/422 contract while still accepting the broader normalized sync snapshot shape.
 - Web backup export/import now includes `skillFiles`, and skill workspace rebuilds preserve or restore additional skill repo files instead of silently dropping everything except `SKILL.md` and `versions/`.
@@ -69,6 +74,11 @@
 
 ## Verification
 
+- Failure-first: desktop backup and Skill IPC tests failed because
+  `skill:insertDirect` was absent and restore still called normal Skill creation.
+- `apps/desktop/node_modules/.bin/vitest run tests/unit/services/database-backup.test.ts tests/unit/services/self-hosted-sync.test.ts tests/unit/main/skill-version-ipc.test.ts tests/unit/main/ipc-index.test.ts tests/integration/services/database-backup-filesystem.integration.test.ts`
+- `apps/desktop/node_modules/.bin/tsc --noEmit`
+- `apps/desktop/node_modules/.bin/vite build`
 - `pnpm --filter @prompthub/web exec tsc --noEmit`
 - `pnpm --filter @prompthub/web test -- src/routes/import-export.test.ts --run`
 - `pnpm --filter @prompthub/web test -- src/routes/sync.test.ts --run`

@@ -42,6 +42,7 @@ function createSkillDbMock() {
     update: vi.fn(),
     deleteVersion: vi.fn(),
     deleteAll: vi.fn(),
+    insertSkillDirect: vi.fn(),
     insertVersionDirect: vi.fn(),
   };
 }
@@ -164,6 +165,46 @@ describe("skill version IPC", () => {
     ).resolves.toBeUndefined();
 
     expect(db.insertVersionDirect).toHaveBeenCalledWith(version);
+  });
+
+  it("directly restores a skill with its snapshot id", async () => {
+    const { db, handlers, IPC_CHANNELS } = await setupSkillVersionIpc();
+    const skill = {
+      id: "skill-1",
+      name: "writer",
+      protocol_type: "skill",
+      tags: [],
+      is_favorite: false,
+      created_at: 1,
+      updated_at: 2,
+    };
+
+    await expect(
+      handlers[IPC_CHANNELS.SKILL_INSERT_DIRECT](null, skill),
+    ).resolves.toBeUndefined();
+
+    expect(db.insertSkillDirect).toHaveBeenCalledWith(skill);
+  });
+
+  it.each([
+    [null, "skill:insertDirect requires a non-null skill object"],
+    ["writer", "skill:insertDirect requires a non-null skill object"],
+    [{ name: "writer" }, "skill:insertDirect requires a non-empty id"],
+    [
+      { id: " ", name: "writer" },
+      "skill:insertDirect requires a non-empty id",
+    ],
+    [{ id: "skill-1" }, "skill:insertDirect requires a non-empty name"],
+    [
+      { id: "skill-1", name: " " },
+      "skill:insertDirect requires a non-empty name",
+    ],
+  ])("rejects invalid direct skill restore input %#", async (skill, message) => {
+    const { handlers, IPC_CHANNELS } = await setupSkillVersionIpc();
+
+    await expect(
+      handlers[IPC_CHANNELS.SKILL_INSERT_DIRECT](null, skill),
+    ).rejects.toThrow(message);
   });
 
   it("rejects invalid createdAt values for direct version restore", async () => {
