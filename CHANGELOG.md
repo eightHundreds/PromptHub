@@ -1,5 +1,17 @@
 ## [Unreleased]
 
+## [0.5.9-beta.2-selfhost.1] - 2026-07-01
+
+### 新功能 / Features
+
+- ☁️ **Cloudflare 自部署同步增强**：Cloudflare Web 可恢复桌面端同步的自定义 Skill 商店源，并以隐私安全的名称摘要呈现项目 Skill；关联 My Skills 的条目可打开已同步内容，本地外部 Skill 不上传内容或文件路径
+  - **Cloudflare Self-hosted Sync Enhancements**: Cloudflare Web now restores synchronized custom Skill Store sources and presents privacy-safe Project Skill name summaries; entries linked to My Skills can open synchronized content, while external local Skills upload neither content nor file paths
+
+### 配置 / Configuration
+
+- 🔐 **Cloudflare 登录验证码**：个人部署配置启用 `AUTH_CAPTCHA_ENABLED=true`，兼容当前桌面客户端的自部署登录流程
+  - **Cloudflare Login Captcha**: The personal deployment enables `AUTH_CAPTCHA_ENABLED=true` for compatibility with the current desktop self-hosted login flow
+
 ## [0.5.9-beta.2] - 2026-06-27
 
 ### 新功能 / Features
