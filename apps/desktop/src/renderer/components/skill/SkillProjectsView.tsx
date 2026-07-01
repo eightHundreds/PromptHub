@@ -800,12 +800,15 @@ export function SkillProjectsView() {
 
   const getImportedLibrarySkill = useCallback(
     (scannedSkill: ScannedSkill): Skill | null => {
+      if (scannedSkill.linkedSkillId) {
+        return skills.find((skill) => skill.id === scannedSkill.linkedSkillId) ?? null;
+      }
       return matchScannedSkillWithLookup(
         scannedSkill,
         importedLibrarySkillLookup,
       );
     },
-    [importedLibrarySkillLookup],
+    [importedLibrarySkillLookup, skills],
   );
 
   const selectedScannedSkill = useMemo(
@@ -1039,6 +1042,13 @@ export function SkillProjectsView() {
 
   const handleOpenProjectSkillDetail = useCallback(
     (scannedSkill: ScannedSkill) => {
+      if (scannedSkill.syncedSummaryOnly) {
+        if (scannedSkill.linkedSkillId) {
+          setStoreView("my-skills");
+          selectSkill(scannedSkill.linkedSkillId);
+        }
+        return;
+      }
       setStoreView("projects");
       selectSkill(null);
       setSelectedProjectSkillPath(scannedSkill.localPath);
@@ -1370,11 +1380,11 @@ export function SkillProjectsView() {
                                         {scannedSkill.description ||
                                           scannedSkill.author}
                                       </div>
-                                      <div className="mt-2 truncate font-mono text-[11px] text-muted-foreground">
-                                        {inferDisplayPath(
-                                          scannedSkill.localPath,
-                                        )}
-                                      </div>
+                                      {!scannedSkill.syncedSummaryOnly ? (
+                                        <div className="mt-2 truncate font-mono text-[11px] text-muted-foreground">
+                                          {inferDisplayPath(scannedSkill.localPath)}
+                                        </div>
+                                      ) : null}
                                       <div className="mt-3 flex flex-wrap gap-1.5">
                                         {isExternalInstall ? (
                                           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">
@@ -1401,7 +1411,7 @@ export function SkillProjectsView() {
                                     </div>
                                   </div>
                                 </button>
-                                <div
+                                {!scannedSkill.syncedSummaryOnly ? <div
                                   data-testid="project-skill-actions"
                                   className="flex w-full shrink-0 items-end justify-end gap-2 self-end justify-self-end max-[760px]:justify-start"
                                 >
@@ -1538,7 +1548,7 @@ export function SkillProjectsView() {
                                       />
                                     )}
                                   </button>
-                                </div>
+                                </div> : null}
                               </div>
                             </article>
                           );

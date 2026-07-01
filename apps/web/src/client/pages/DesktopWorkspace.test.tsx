@@ -112,8 +112,18 @@ describe('DesktopWorkspacePage', () => {
       if (path === '/api/sync/data') {
         return new Response(
           JSON.stringify({
-            data: {
-              storeSources: {
+          data: {
+            projectSkillInventories: [
+              {
+                projectId: 'project-1',
+                scannedAt: 123,
+                skills: [
+                  { name: 'Linked Skill', linkedSkillId: 'skill-1' },
+                  { name: 'Local Skill' },
+                ],
+              },
+            ],
+            storeSources: {
                 skills: {
                   customStoreSources: [
                     {
@@ -146,6 +156,10 @@ describe('DesktopWorkspacePage', () => {
     expect(persisted.state.viewMode).toBe('list');
     expect(persisted.state.selectedStoreSourceId).toBe('custom-skills');
     expect(persisted.state.customStoreSources).toEqual([expect.objectContaining({ id: 'custom-skills' })]);
+    expect(persisted.state.projectScanState['project-1'].scannedSkills).toEqual([
+      expect.objectContaining({ name: 'Linked Skill', linkedSkillId: 'skill-1', syncedSummaryOnly: true }),
+      expect.objectContaining({ name: 'Local Skill', syncedSummaryOnly: true }),
+    ]);
   });
 
   it('keeps local Skill Store state when the remote source snapshot is malformed', async () => {

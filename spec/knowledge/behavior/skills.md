@@ -6,6 +6,13 @@
 
 ## Stable Requirements
 
+### Project Skill Remote Summary Boundary
+
+- Project Skills remain desktop-filesystem-derived assets.
+- Self-hosted sync may carry project names/configured paths and a name-only inventory.
+- A summary may reference My Skills only through stable path/fingerprint identity; display-name matching is forbidden.
+- Unlinked project-local summaries must not upload instructions, content, or absolute Skill file paths.
+
 ### 1. Skill Package Contract
 
 - Skill 是目录级 package；`SKILL.md` 是 package 内的必需入口文件，不是 Skill 的完整边界。

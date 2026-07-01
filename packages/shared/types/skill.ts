@@ -426,6 +426,10 @@ export interface ScannedSkill {
    * of such duplicates, so the UI should warn the user.
    */
   nameConflict?: boolean;
+  /** Remote Project Skill summary linked to My Skills when available. */
+  linkedSkillId?: string;
+  /** Summary has no readable local filesystem content. */
+  syncedSummaryOnly?: boolean;
 }
 
 export interface AgentScannedSkill extends ScannedSkill {

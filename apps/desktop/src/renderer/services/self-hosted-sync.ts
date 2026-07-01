@@ -4,6 +4,7 @@ import type {
   McpLibraryFile,
   PluginLibraryFile,
   PluginPackageSnapshot,
+  ProjectSkillInventory,
   RuleBackupRecord,
   Settings,
 } from "@prompthub/shared/types";
@@ -12,6 +13,7 @@ import type { Prompt, PromptVersion } from "@prompthub/shared/types/prompt";
 import type {
   Skill,
   SkillFileSnapshot,
+  ScannedSkill,
   SkillVersion,
 } from "@prompthub/shared/types/skill";
 import { exportDatabase, restoreFromBackup } from "./database-backup";
@@ -80,6 +82,7 @@ interface WebSyncPayload {
   pluginLibrary?: PluginLibraryFile;
   pluginPackages?: PluginPackageSnapshot[];
   storeSources?: AgentAssetStoreSourcesSnapshot;
+  projectSkillInventories?: ProjectSkillInventory[];
   agentAssetFiles?: AgentAssetFilesSnapshot;
   settings: Settings;
   settingsUpdatedAt?: string;
@@ -321,12 +324,57 @@ function toWebSettings(backup: DatabaseBackup): Settings {
       typeof state.customSkillPlatformPaths === "object"
         ? state.customSkillPlatformPaths
         : {},
+    skillProjects: Array.isArray(state.skillProjects)
+      ? state.skillProjects
+      : [],
     sync: {
       enabled: false,
       provider: "manual",
       autoSync: false,
     },
   };
+}
+
+function normalizeLocalPath(value: unknown): string {
+  return typeof value === "string"
+    ? value.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase()
+    : "";
+}
+
+function collectProjectSkillInventories(skills: Skill[]): ProjectSkillInventory[] | undefined {
+  try {
+    const envelope = JSON.parse(window.localStorage.getItem("skill-store") ?? "{}");
+    const scanState = envelope?.state?.projectScanState;
+    if (!scanState || typeof scanState !== "object" || Array.isArray(scanState)) return undefined;
+
+    const inventories = Object.entries(scanState).flatMap(([projectId, rawState]) => {
+      const state = rawState as { scannedAt?: unknown; scannedSkills?: unknown };
+      if (!Array.isArray(state.scannedSkills)) return [];
+      const summaries = state.scannedSkills.flatMap((rawSkill) => {
+        const scanned = rawSkill as Partial<ScannedSkill>;
+        if (typeof scanned.name !== "string" || !scanned.name.trim()) return [];
+        const linked = skills.find((skill) =>
+          Boolean(
+            (scanned.directory_fingerprint &&
+              skill.directory_fingerprint === scanned.directory_fingerprint) ||
+              (skill.local_repo_path &&
+                [scanned.localPath, scanned.symlinkTargetPath]
+                  .map(normalizeLocalPath)
+                  .includes(normalizeLocalPath(skill.local_repo_path))),
+          ),
+        );
+        return [{ name: scanned.name, ...(linked ? { linkedSkillId: linked.id } : {}) }];
+      });
+      return [{
+        projectId,
+        ...(typeof state.scannedAt === "number" ? { scannedAt: state.scannedAt } : {}),
+        skills: summaries,
+      }];
+    });
+    return inventories.length > 0 ? inventories : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function remapPromptMedia(
@@ -414,6 +462,7 @@ function buildDesktopSettingsSnapshot(
       customPlatformRootPaths: webSettings.customPlatformRootPaths || {},
       disabledPlatformIds: webSettings.disabledPlatformIds || [],
       customSkillPlatformPaths: webSettings.customSkillPlatformPaths || {},
+      skillProjects: webSettings.skillProjects || currentState.skillProjects,
       settingsUpdatedAt: settingsUpdatedAt || new Date().toISOString(),
     },
   };
@@ -712,6 +761,7 @@ export async function pushToSelfHostedWeb(
     pluginLibrary: backup.pluginLibrary,
     pluginPackages: backup.pluginPackages,
     storeSources: backup.storeSources,
+    projectSkillInventories: collectProjectSkillInventories(backup.skills || []),
     agentAssetFiles: backup.agentAssetFiles,
     settings: toWebSettings(backup),
     settingsUpdatedAt: backup.settingsUpdatedAt,

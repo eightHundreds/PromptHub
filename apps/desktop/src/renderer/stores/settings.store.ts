@@ -1751,6 +1751,9 @@ export async function loadSettingsFromMainProcess(): Promise<void> {
     aiModels,
     modelRouteDefaults,
     networkProxy,
+    skillProjects: normalizeSkillProjects(
+      settings.skillProjects ?? state.skillProjects,
+    ),
   });
 
   if (typeof settings.launchAtStartup !== "boolean") {

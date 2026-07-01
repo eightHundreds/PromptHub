@@ -72,6 +72,54 @@ export function restoreSyncedSkillStoreSources(snapshot: unknown): boolean {
   return true;
 }
 
+export function restoreSyncedProjectSkillInventories(snapshot: unknown): boolean {
+  if (!isRecord(snapshot) || !Array.isArray(snapshot.projectSkillInventories)) return false;
+  const projectScanState: Record<string, unknown> = {};
+  for (const rawInventory of snapshot.projectSkillInventories) {
+    if (!isRecord(rawInventory) || typeof rawInventory.projectId !== 'string' || !Array.isArray(rawInventory.skills)) {
+      return false;
+    }
+    const scannedSkills = rawInventory.skills.map((rawSkill, index) => {
+      if (!isRecord(rawSkill) || typeof rawSkill.name !== 'string' || !rawSkill.name.trim()) return null;
+      if (rawSkill.linkedSkillId !== undefined && typeof rawSkill.linkedSkillId !== 'string') return null;
+      const syntheticPath = `synced-project:${rawInventory.projectId}:${index}`;
+      return {
+        name: rawSkill.name,
+        description: '',
+        author: '',
+        tags: [],
+        instructions: '',
+        filePath: `${syntheticPath}/SKILL.md`,
+        localPath: syntheticPath,
+        platforms: [],
+        syncedSummaryOnly: true,
+        ...(rawSkill.linkedSkillId ? { linkedSkillId: rawSkill.linkedSkillId } : {}),
+      };
+    });
+    if (scannedSkills.some((skill) => skill === null)) return false;
+    projectScanState[rawInventory.projectId] = {
+      scannedSkills,
+      isScanning: false,
+      scannedAt: typeof rawInventory.scannedAt === 'number' ? rawInventory.scannedAt : Date.now(),
+      error: null,
+    };
+  }
+
+  let envelope: Record<string, unknown> = {};
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(SKILL_STORE_STORAGE_KEY) ?? '{}');
+    if (isRecord(parsed)) envelope = parsed;
+  } catch {
+    // Replace malformed browser state with the valid remote inventory.
+  }
+  const state = isRecord(envelope.state) ? envelope.state : {};
+  window.localStorage.setItem(SKILL_STORE_STORAGE_KEY, JSON.stringify({
+    ...envelope,
+    state: { ...state, projectScanState },
+  }));
+  return true;
+}
+
 function isValidBrowserDeviceId(value: string | null): value is string {
   const normalized = value?.trim();
   return Boolean(normalized && normalized.length <= MAX_BROWSER_DEVICE_ID_LENGTH);
@@ -129,6 +177,7 @@ export function DesktopWorkspacePage() {
         }
         const payload = (await response.json()) as { data?: unknown };
         restoreSyncedSkillStoreSources(payload.data);
+        restoreSyncedProjectSkillInventories(payload.data);
       } catch (error) {
         console.warn('Failed to restore synced Skill Store sources:', error);
       } finally {

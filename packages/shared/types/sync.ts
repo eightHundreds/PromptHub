@@ -34,6 +34,12 @@ export interface AgentAssetStoreSourcesSnapshot {
   plugins?: CustomStoreSourceSnapshot;
 }
 
+export interface ProjectSkillInventory {
+  projectId: string;
+  scannedAt?: number;
+  skills: Array<{ name: string; linkedSkillId?: string }>;
+}
+
 export interface AgentAssetFileSnapshot {
   relativePath: string;
   contentBase64: string;
@@ -116,6 +122,7 @@ export interface SyncSnapshot {
   pluginLibrary?: PluginLibraryFile;
   pluginPackages?: PluginPackageSnapshot[];
   storeSources?: AgentAssetStoreSourcesSnapshot;
+  projectSkillInventories?: ProjectSkillInventory[];
   agentAssetFiles?: AgentAssetFilesSnapshot;
   settings?: Settings;
   settingsUpdatedAt?: string;

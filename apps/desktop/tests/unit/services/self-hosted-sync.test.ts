@@ -423,6 +423,16 @@ describe("self-hosted-sync", () => {
           autoSave: false,
           builtinAgentOverrides: { claude: { rootPath: "/tmp/claude-root" } },
           customPlatformRootPaths: { claude: "/tmp/claude-root" },
+          skillProjects: [
+            {
+              id: "project-1",
+              name: "Docs",
+              rootPath: "/tmp/docs",
+              scanPaths: ["/tmp/docs/.agents/skills"],
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
         },
       },
       rules: [
@@ -456,6 +466,30 @@ describe("self-hosted-sync", () => {
     };
 
     exportDatabaseMock.mockResolvedValue(backup);
+    window.localStorage.setItem(
+      "skill-store",
+      JSON.stringify({
+        state: {
+          projectScanState: {
+            "project-1": {
+              scannedAt: 123,
+              scannedSkills: [
+                {
+                  name: "Linked Skill",
+                  directory_fingerprint: "fingerprint-1",
+                  localPath: "/tmp/docs/.agents/skills/linked",
+                },
+                {
+                  name: "Local Skill",
+                  localPath: "/tmp/docs/.agents/skills/local",
+                },
+              ],
+            },
+          },
+        },
+      }),
+    );
+    backup.skills![0].directory_fingerprint = "fingerprint-1";
 
     const fetchMock = vi.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -500,7 +534,9 @@ describe("self-hosted-sync", () => {
                 autoSave: boolean;
                 builtinAgentOverrides: Record<string, { rootPath?: string }>;
                 customPlatformRootPaths: Record<string, string>;
+                skillProjects?: unknown[];
               };
+              projectSkillInventories?: unknown[];
             };
           };
 
@@ -525,6 +561,7 @@ describe("self-hosted-sync", () => {
             autoSave: false,
             builtinAgentOverrides: { claude: { rootPath: "/tmp/claude-root" } },
             customPlatformRootPaths: { claude: "/tmp/claude-root" },
+            skillProjects: [expect.objectContaining({ id: "project-1", name: "Docs", rootPath: "/tmp/docs" })],
             customSkillPlatformPaths: {},
             disabledPlatformIds: [],
             sync: {
@@ -533,6 +570,16 @@ describe("self-hosted-sync", () => {
               autoSync: false,
             },
           });
+          expect(parsedBody.payload.projectSkillInventories).toEqual([
+            {
+              projectId: "project-1",
+              scannedAt: 123,
+              skills: [
+                { name: "Linked Skill", linkedSkillId: "skill-1" },
+                { name: "Local Skill" },
+              ],
+            },
+          ]);
 
           return jsonResponse({
             data: {

@@ -28,6 +28,7 @@
 - WebDAV structured push must upload referenced media before publishing `data.json` and `manifest.json`; pull must verify `data.json` and media bytes against the manifest hash/size before import can continue.
 - Cloudflare self-hosted sync must preserve optional `storeSources` metadata in the D1 JSON snapshot so desktop custom Skill, MCP, and Plugin Store source selections survive push/pull cycles.
 - After authentication, the self-hosted Web workspace must restore valid remote `storeSources.skills` into browser `skill-store` persistence before loading the shared desktop renderer; missing, malformed, or unavailable remote metadata must leave existing browser state usable.
+- Project Skill sync is summary-only: project registration paths may synchronize through settings, while each scanned entry contributes only its name and an optional stable My Skills ID; project-local instructions, content, and Skill file paths must not enter the remote snapshot.
 
 ### 2. Desktop And Web Relationship
 

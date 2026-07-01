@@ -126,6 +126,9 @@
   sources into browser persistence before importing the shared desktop renderer,
   while preserving unrelated browser-local Skill Store preferences and falling
   back to existing local state when remote hydration fails.
+- Cloudflare Web may present synchronized Project Skill summaries without local
+  filesystem access. Linked summaries open their synchronized My Skills record;
+  unlinked summaries remain name-only and expose no local file operations.
 - Desktop renderer modal surfaces that are not visible during normal
   authenticated workspace render, including update, close, recovery, and backup
   import confirmation dialogs, should stay lazy-loaded behind local Suspense

@@ -57,6 +57,15 @@ describe("sync snapshot helpers", () => {
 
     const normalized = normalizeSnapshot({
       storeSources: { plugins },
+      projectSkillInventories: [
+        {
+          projectId: "project-1",
+          skills: [
+            { name: "Linked Skill", linkedSkillId: "skill-1" },
+            { name: "Local Skill" },
+          ],
+        },
+      ],
     });
     let boundValues: unknown[] = [];
     const db = {
@@ -73,6 +82,15 @@ describe("sync snapshot helpers", () => {
 
     expect(normalized.storeSources?.plugins).toEqual(plugins);
     expect(storedSnapshot.storeSources.plugins).toEqual(plugins);
+    expect(storedSnapshot.projectSkillInventories).toEqual([
+      {
+        projectId: "project-1",
+        skills: [
+          { name: "Linked Skill", linkedSkillId: "skill-1" },
+          { name: "Local Skill" },
+        ],
+      },
+    ]);
   });
 
   it("omits malformed store source configuration", () => {
