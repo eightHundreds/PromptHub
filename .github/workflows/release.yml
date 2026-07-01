@@ -1,5 +1,7 @@
 name: Desktop Build and Release
 
+# Keep this workflow registered on the personal fork's default branch.
+
 on:
   push:
     tags:
