@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { closeDatabase } from "@prompthub/core";
 import { createCliSkillService, runCli } from "@prompthub/core";
+import { initDatabase as initSqliteDatabase, SkillDB } from "@prompthub/db";
 import type { SkillSafetyReport } from "@prompthub/shared/types";
 
 function makeTempRoot(tempDirs: string[]): string {
@@ -17,6 +18,22 @@ function makeTempRoot(tempDirs: string[]): string {
 
 function withDataDir(rootDir: string): string[] {
   return ["--data-dir", path.join(rootDir, "user-data")];
+}
+
+function createSkillInDatabase(dbPath: string, name: string): void {
+  closeDatabase();
+  const db = initSqliteDatabase(dbPath);
+  new SkillDB(db).create(
+    {
+      name,
+      description: `${name} fixture`,
+      instructions: `# ${name}`,
+      protocol_type: "skill",
+      is_favorite: false,
+    },
+    { skipInitialVersion: true },
+  );
+  closeDatabase();
 }
 
 async function withTempHome<T>(
@@ -125,6 +142,52 @@ describe("standalone cli wiring", () => {
     expect(result.exitCode).toBe(2);
     expect(result.errorJson.error.code).toBe("USAGE_ERROR");
     expect(result.errorJson.error.message).toContain("--data-dir");
+  });
+
+  it("prefers the unified data database over the legacy root database", async () => {
+    const root = makeTempRoot(tempDirs);
+    const userDataDir = path.join(root, "user-data");
+    const legacyDbPath = path.join(userDataDir, "prompthub.db");
+    const unifiedDbPath = path.join(userDataDir, "data", "prompthub.db");
+
+    createSkillInDatabase(legacyDbPath, "legacy-skill");
+    createSkillInDatabase(unifiedDbPath, "unified-skill");
+
+    const result = await execCli([...withDataDir(root), "skill", "list"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.json.map((skill: { name: string }) => skill.name)).toEqual([
+      "unified-skill",
+    ]);
+  });
+
+  it("falls back to the legacy root database when no unified data database exists", async () => {
+    const root = makeTempRoot(tempDirs);
+    const userDataDir = path.join(root, "user-data");
+    const legacyDbPath = path.join(userDataDir, "prompthub.db");
+
+    createSkillInDatabase(legacyDbPath, "legacy-skill");
+
+    const result = await execCli([...withDataDir(root), "skill", "list"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.json.map((skill: { name: string }) => skill.name)).toEqual([
+      "legacy-skill",
+    ]);
+  });
+
+  it("creates new CLI databases under the unified data directory", async () => {
+    const root = makeTempRoot(tempDirs);
+    const userDataDir = path.join(root, "user-data");
+
+    const result = await execCli([...withDataDir(root), "skill", "list"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.json).toEqual([]);
+    expect(fs.existsSync(path.join(userDataDir, "data", "prompthub.db"))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(userDataDir, "prompthub.db"))).toBe(false);
   });
 
   it("supports prompt create and list in an isolated data dir", async () => {

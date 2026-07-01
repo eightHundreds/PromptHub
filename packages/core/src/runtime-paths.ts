@@ -83,6 +83,17 @@ export function getDataDir(): string {
   return path.join(getUserDataPath(), "data");
 }
 
+export function getLegacyDatabasePath(): string {
+  return path.join(getUserDataPath(), "prompthub.db");
+}
+
+export function getDatabasePath(): string {
+  return resolvePreferredPath(
+    path.join(getDataDir(), "prompthub.db"),
+    getLegacyDatabasePath(),
+  );
+}
+
 export function getConfigDir(): string {
   return path.join(getUserDataPath(), "config");
 }
