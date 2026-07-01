@@ -1,12 +1,76 @@
-import { useEffect } from 'react';
-import DesktopApp from '@desktop-renderer-app';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { ToastProvider } from '@desktop-toast-provider';
 import { installDesktopBridge } from '../desktop/install-bridge';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchWithAuthRetry } from '../api/auth-session';
 
+const DesktopApp = lazy(() => import('@desktop-renderer-app'));
 const BROWSER_DEVICE_ID_STORAGE_KEY = 'prompthub-web-device-id';
+const SKILL_STORE_STORAGE_KEY = 'skill-store';
 const MAX_BROWSER_DEVICE_ID_LENGTH = 128;
+const STORE_SOURCE_TYPES = new Set(['official', 'community', 'marketplace-json', 'git-repo', 'local-dir']);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function normalizeSkillStoreSource(value: unknown): Record<string, unknown> | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.id !== 'string' ||
+    !value.id.trim() ||
+    typeof value.name !== 'string' ||
+    !value.name.trim() ||
+    typeof value.url !== 'string' ||
+    !value.url.trim() ||
+    typeof value.type !== 'string' ||
+    !STORE_SOURCE_TYPES.has(value.type)
+  ) {
+    return null;
+  }
+
+  return {
+    id: value.id,
+    name: value.name,
+    type: value.type,
+    url: value.url,
+    enabled: typeof value.enabled === 'boolean' ? value.enabled : true,
+    createdAt: typeof value.createdAt === 'number' ? value.createdAt : 0,
+    ...(typeof value.branch === 'string' ? { branch: value.branch } : {}),
+    ...(typeof value.directory === 'string' ? { directory: value.directory } : {}),
+    ...(typeof value.order === 'number' ? { order: value.order } : {}),
+  };
+}
+
+export function restoreSyncedSkillStoreSources(snapshot: unknown): boolean {
+  if (!isRecord(snapshot) || !isRecord(snapshot.storeSources)) return false;
+  const skills = snapshot.storeSources.skills;
+  if (!isRecord(skills) || !Array.isArray(skills.customStoreSources)) return false;
+  const customStoreSources = skills.customStoreSources.map(normalizeSkillStoreSource);
+  if (customStoreSources.some((source) => source === null)) return false;
+  if (skills.selectedSourceId !== undefined && typeof skills.selectedSourceId !== 'string') return false;
+
+  let envelope: Record<string, unknown> = {};
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(SKILL_STORE_STORAGE_KEY) ?? '{}');
+    if (isRecord(parsed)) envelope = parsed;
+  } catch {
+    // Replace malformed browser state with the valid remote source snapshot.
+  }
+  const state = isRecord(envelope.state) ? envelope.state : {};
+  window.localStorage.setItem(
+    SKILL_STORE_STORAGE_KEY,
+    JSON.stringify({
+      ...envelope,
+      state: {
+        ...state,
+        customStoreSources,
+        ...(skills.selectedSourceId ? { selectedStoreSourceId: skills.selectedSourceId } : {}),
+      },
+    }),
+  );
+  return true;
+}
 
 function isValidBrowserDeviceId(value: string | null): value is string {
   const normalized = value?.trim();
@@ -50,8 +114,33 @@ function detectClientPlatform(userAgent: string): string {
 
 export function DesktopWorkspacePage() {
   const { user, registrationAllowed, isInitialized, logout } = useAuth();
+  const [storeSourcesReady, setStoreSourcesReady] = useState(false);
 
   installDesktopBridge();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateStoreSources(): Promise<void> {
+      try {
+        const response = await fetchWithAuthRetry('/api/sync/data');
+        if (!response.ok) {
+          throw new Error(`Skill Store source sync failed: ${response.status}`);
+        }
+        const payload = (await response.json()) as { data?: unknown };
+        restoreSyncedSkillStoreSources(payload.data);
+      } catch (error) {
+        console.warn('Failed to restore synced Skill Store sources:', error);
+      } finally {
+        if (!cancelled) setStoreSourcesReady(true);
+      }
+    }
+
+    void hydrateStoreSources();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.username]);
 
   useEffect(() => {
     const heartbeat = async () => {
@@ -103,9 +192,13 @@ export function DesktopWorkspacePage() {
     window.dispatchEvent(new CustomEvent('prompthub:web-context-changed'));
   }, [isInitialized, logout, registrationAllowed, user?.username]);
 
+  if (!storeSourcesReady) return null;
+
   return (
     <ToastProvider>
-      <DesktopApp />
+      <Suspense fallback={null}>
+        <DesktopApp />
+      </Suspense>
     </ToastProvider>
   );
 }

@@ -122,6 +122,10 @@
 - The authenticated desktop workspace route must stay lazy-loaded so
   unauthenticated setup/login flows do not eagerly download or evaluate the
   desktop workspace bundle.
+- The authenticated Web workspace must hydrate valid synced custom Skill Store
+  sources into browser persistence before importing the shared desktop renderer,
+  while preserving unrelated browser-local Skill Store preferences and falling
+  back to existing local state when remote hydration fails.
 - Desktop renderer modal surfaces that are not visible during normal
   authenticated workspace render, including update, close, recovery, and backup
   import confirmation dialogs, should stay lazy-loaded behind local Suspense
